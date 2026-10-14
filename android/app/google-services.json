@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "564320154688",
+    "project_id": "orderezee-e2fd2",
+    "storage_bucket": "orderezee-e2fd2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:564320154688:android:e7ee22705e85d67a7c9ba5",
+        "android_client_info": {
+          "package_name": "com.example.ozie"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "564320154688-ss182lnmr0jhq64rd0smnfthcv25s8p6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.ozie",
+            "certificate_hash": "e4993a06f2795d7b5a38441bdb7bea5872a33f0b"
+          }
+        },
+        {
+          "client_id": "564320154688-0u4fotq2601uurb3nflk38f54i7qe7g1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDVYhDV6umrq9eXALIUI13_n04k85KXoBc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "564320154688-0u4fotq2601uurb3nflk38f54i7qe7g1.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "564320154688-ed68qdqirppttmqouotdpd07960i17sq.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.ozie"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
