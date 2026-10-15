@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/models.dart';
 import '../../core/router.dart';
 import '../../widgets/app_widgets.dart';
+import '../notifications_screen.dart';
+import '../profile_screen.dart';
 
 class _MenuItem {
   final IconData icon;
@@ -114,7 +116,11 @@ class SettingsTab extends StatelessWidget {
     VoidCallback soon(String l) => () => _soon(context, l);
 
     final items = <_MenuItem>[
-      _MenuItem(Icons.person_outline_rounded, 'My Account', soon('My Account')),
+      _MenuItem(Icons.person_outline_rounded, 'My Account', () {
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const ProfileScreen()),
+        );
+      }),
       _MenuItem(Icons.grid_view_rounded, 'My Catalog', soon('My Catalog')),
       _MenuItem(Icons.receipt_long_outlined, 'View Orders', soon('View Orders')),
       _MenuItem(Icons.account_balance_wallet_outlined, 'Ozie Finance', soon('Ozie Finance')),
@@ -124,7 +130,11 @@ class SettingsTab extends StatelessWidget {
       _MenuItem(Icons.assignment_return_outlined, 'My Returns', soon('My Returns')),
       _MenuItem(Icons.local_offer_outlined, 'Schemes', soon('Schemes')),
       _MenuItem(Icons.bar_chart_rounded, 'Report', soon('Report')),
-      _MenuItem(Icons.notifications_none_rounded, 'Notifications', soon('Notifications')),
+      _MenuItem(Icons.notifications_none_rounded, 'Notifications', () {
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const NotificationsScreen()),
+        );
+      }),
       _MenuItem(Icons.support_agent_outlined, 'My Tickets', soon('My Tickets')),
     ];
 

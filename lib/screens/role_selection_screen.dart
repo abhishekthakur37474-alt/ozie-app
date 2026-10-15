@@ -3,23 +3,12 @@ import 'package:hugeicons/hugeicons.dart';
 
 import '../core/api_client.dart';
 import '../core/auth_service.dart';
+import '../core/constants.dart';
 import '../core/models.dart';
+import '../core/onboarding_service.dart';
 import '../core/router.dart';
 import '../widgets/app_widgets.dart';
-
-const List<String> kIndianStates = [
-  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
-  'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
-  'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya',
-  'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim',
-  'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand',
-  'West Bengal',
-  'Andaman and Nicobar Islands', 'Chandigarh',
-  'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Jammu and Kashmir',
-  'Ladakh', 'Lakshadweep', 'Puducherry',
-];
-
-const List<String> kUserTypes = ['Manufacturer', 'Distributor', 'Retailer'];
+import 'retailer_form_screen.dart';
 
 enum _View { role, code, inquiry, submitted }
 
@@ -68,20 +57,15 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     if (!_codeKey.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
-      await AuthService.verifyCode(_codeCtrl.text.trim());
+      await OnboardingService.verifyCode(_codeCtrl.text.trim());
       if (!mounted) return;
-      await showDialog<void>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Code verified'),
-          content: const Text(
-            'Your introduction code is valid.\n\nThe retailer registration form will be available in the next app update.',
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('OK')),
-          ],
+      final session = await Navigator.of(context).push<Session>(
+        MaterialPageRoute<Session>(
+          builder: (_) => RetailerFormScreen(session: widget.session),
         ),
       );
+      if (!mounted || session == null) return;
+      goToSession(context, session);
     } on ApiException catch (e) {
       if (!mounted) return;
       showStatus(context, e.message, error: true);
@@ -94,7 +78,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     if (!_inqKey.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
-      await AuthService.submitInquiry(
+      await OnboardingService.submitInquiry(
         companyName: _company.text.trim(),
         name: _name.text.trim(),
         contactNumber: _contact.text.trim(),

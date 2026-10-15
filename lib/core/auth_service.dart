@@ -140,25 +140,15 @@ class AuthService {
     return (res['message'] as String?) ?? 'Recovery link sent.';
   }
 
-  static Future<void> verifyCode(String code) async {
-    await _api.post('v1/onboarding/verify-code', body: {'code': code});
-  }
-
-  static Future<void> submitInquiry({
-    required String companyName,
-    required String name,
-    required String contactNumber,
-    required String industry,
-    required String location,
-    required String userType,
+  /// Changes the password of the logged-in user. Other devices are signed out,
+  /// the current one stays logged in.
+  static Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
   }) async {
-    await _api.post('v1/onboarding/inquiry', body: {
-      'company_name': companyName,
-      'name': name,
-      'contact_number': contactNumber,
-      'industry': industry,
-      'location': location,
-      'user_type': userType,
+    await _api.post('v1/auth/change-password', body: {
+      'current_password': currentPassword,
+      'new_password': newPassword,
     });
   }
 }

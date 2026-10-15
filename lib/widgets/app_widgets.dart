@@ -224,6 +224,8 @@ class LabeledField extends StatelessWidget {
   final String? Function(String?)? validator;
   final TextInputAction? textInputAction;
   final void Function(String)? onSubmitted;
+  final FocusNode? focusNode;
+  final void Function(String)? onChanged;
 
   const LabeledField({
     super.key,
@@ -236,6 +238,8 @@ class LabeledField extends StatelessWidget {
     this.validator,
     this.textInputAction,
     this.onSubmitted,
+    this.focusNode,
+    this.onChanged,
   });
 
   @override
@@ -247,10 +251,12 @@ class LabeledField extends StatelessWidget {
         const SizedBox(height: 4),
         TextFormField(
           controller: controller,
+          focusNode: focusNode,
           obscureText: obscure,
           keyboardType: keyboardType,
           textInputAction: textInputAction,
           onFieldSubmitted: onSubmitted,
+          onChanged: onChanged,
           validator: validator,
           style: const TextStyle(fontSize: 14, color: AppColors.text),
           decoration: inputDecoration(hint: hint, suffix: suffix),
@@ -264,6 +270,7 @@ class LabeledDropdown extends StatelessWidget {
   final String label;
   final String hint;
   final List<String> items;
+  final String? value;
   final void Function(String?) onChanged;
   final String? Function(String?)? validator;
 
@@ -272,6 +279,7 @@ class LabeledDropdown extends StatelessWidget {
     required this.label,
     required this.hint,
     required this.items,
+    this.value,
     required this.onChanged,
     this.validator,
   });
@@ -284,6 +292,7 @@ class LabeledDropdown extends StatelessWidget {
         Text(label, style: const TextStyle(fontSize: 12, color: AppColors.text)),
         const SizedBox(height: 4),
         DropdownButtonFormField<String>(
+          initialValue: value,
           isExpanded: true,
           hint: Text(hint, style: const TextStyle(fontSize: 13, color: AppColors.muted)),
           items: items
