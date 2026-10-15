@@ -65,6 +65,48 @@ ThemeData buildTheme() {
 String? requiredValidator(String? v) =>
     (v == null || v.trim().isEmpty) ? 'This field is required' : null;
 
+const List<String> _kMonths = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+
+/// Formats a number as Indian rupees, e.g. 1234567.5 -> "₹12,34,567.50".
+String formatInr(dynamic value, {bool decimals = true}) {
+  final v = (value is num) ? value.toDouble() : double.tryParse('$value') ?? 0;
+  final neg = v < 0;
+  final fixed = v.abs().toStringAsFixed(decimals ? 2 : 0);
+  final parts = fixed.split('.');
+  final intPart = parts[0];
+  final buf = StringBuffer();
+  if (intPart.length <= 3) {
+    buf.write(intPart);
+  } else {
+    final last3 = intPart.substring(intPart.length - 3);
+    var rest = intPart.substring(0, intPart.length - 3);
+    final chunks = <String>[];
+    while (rest.length > 2) {
+      chunks.insert(0, rest.substring(rest.length - 2));
+      rest = rest.substring(0, rest.length - 2);
+    }
+    if (rest.isNotEmpty) chunks.insert(0, rest);
+    buf.write(chunks.join(','));
+    buf.write(',');
+    buf.write(last3);
+  }
+  final out = parts.length > 1 ? '${buf.toString()}.${parts[1]}' : buf.toString();
+  return '${neg ? '-' : ''}₹$out';
+}
+
+/// "2026-10-15 10:15:00" or "2026-10-15" -> "15 Oct 2026". Falls back to input.
+String formatDate(String? raw) {
+  final s = (raw ?? '').trim();
+  if (s.isEmpty) return '-';
+  final datePart = s.split(' ').first;
+  final d = DateTime.tryParse(datePart);
+  if (d == null) return datePart;
+  return '${d.day} ${_kMonths[d.month - 1]} ${d.year}';
+}
+
 void showStatus(BuildContext context, String message, {bool error = false}) {
   final messenger = ScaffoldMessenger.of(context);
   messenger.hideCurrentSnackBar();
