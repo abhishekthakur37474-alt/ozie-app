@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../core/api_client.dart';
 import '../core/constants.dart';
@@ -76,6 +78,7 @@ class _RetailerFormScreenState extends State<RetailerFormScreen> {
   bool? _licenseAvailable;
   bool _checkingContact = false;
   bool _checkingLicense = false;
+  bool _fetchingLocation = false;
   bool _submitting = false;
 
   @override
@@ -155,27 +158,104 @@ class _RetailerFormScreenState extends State<RetailerFormScreen> {
   }
 
   Future<void> _addToList(List<String> list, String title) async {
-    final ctrl = TextEditingController();
     final value = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(hintText: 'Type a value'),
-          onSubmitted: (v) => Navigator.of(ctx).pop(v),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.of(ctx).pop(ctrl.text), child: const Text('Add')),
-        ],
-      ),
+      builder: (_) => _AddValueDialog(title: title),
     );
     final v = value?.trim() ?? '';
-    ctrl.dispose();
     if (v.isNotEmpty && mounted) setState(() => list.add(v));
+  }
+
+  String? _clean(String? v) {
+    final t = v?.trim() ?? '';
+    return t.isEmpty ? null : t;
+  }
+
+  void _fill(TextEditingController c, String? v) {
+    final t = _clean(v);
+    if (t != null) c.text = t;
+  }
+
+  String? _matchState(String? area) {
+    final a = _clean(area);
+    if (a == null) return null;
+    final lower = a.toLowerCase();
+    for (final s in kIndianStates) {
+      if (s.toLowerCase() == lower) return s;
+    }
+    const aliases = {
+      'orissa': 'Odisha',
+      'uttaranchal': 'Uttarakhand',
+      'pondicherry': 'Puducherry',
+      'jammu & kashmir': 'Jammu and Kashmir',
+      'nct of delhi': 'Delhi',
+      'new delhi': 'Delhi',
+      'tamilnadu': 'Tamil Nadu',
+      'telengana': 'Telangana',
+    };
+    final alias = aliases[lower];
+    if (alias != null) return alias;
+    for (final s in kIndianStates) {
+      if (lower.contains(s.toLowerCase())) return s;
+    }
+    return null;
+  }
+
+  void _applyPlacemark(Placemark p) {
+    _fill(_building, _clean(p.subThoroughfare) ?? p.name);
+    _fill(_street, _clean(p.thoroughfare) ?? p.street);
+    _fill(_locality, _clean(p.subLocality) ?? p.locality);
+    _fill(_city, _clean(p.locality) ?? p.subAdministrativeArea);
+    _fill(_pincode, p.postalCode);
+    _fill(_country, _clean(p.country) ?? 'India');
+    final matched = _matchState(p.administrativeArea);
+    if (matched != null) _state = matched;
+  }
+
+  Future<void> _fetchLocation() async {
+    if (_fetchingLocation) return;
+    setState(() => _fetchingLocation = true);
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        if (mounted) {
+          showStatus(context, 'Location services are off. Please enable GPS.', error: true);
+        }
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          showStatus(context, 'Location permission denied. Allow it to auto-fill.', error: true);
+        }
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
+      final placemarks = await Geocoding().placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+      if (!mounted) return;
+      if (placemarks.isEmpty) {
+        showStatus(context, 'Could not resolve your address. Please enter it manually.', error: true);
+        return;
+      }
+      setState(() => _applyPlacemark(placemarks.first));
+      showStatus(context, 'Location fetched. Please verify the address.');
+    } catch (_) {
+      if (mounted) {
+        showStatus(context, 'Could not fetch location. Please try again.', error: true);
+      }
+    } finally {
+      if (mounted) setState(() => _fetchingLocation = false);
+    }
   }
 
   Future<void> _submit() async {
@@ -434,6 +514,31 @@ class _RetailerFormScreenState extends State<RetailerFormScreen> {
             ),
 
             _sectionTitle('Shop Location'),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                onPressed: (_submitting || _fetchingLocation) ? null : _fetchLocation,
+                icon: _fetchingLocation
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.my_location, size: 18),
+                label: Text(
+                  _fetchingLocation ? 'Fetching location...' : 'Fetch Current Location',
+                  style: const TextStyle(fontSize: 13),
+                ),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 40),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  foregroundColor: AppColors.blue,
+                  side: const BorderSide(color: AppColors.blue),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
             LabeledField(
               label: 'Shop / Building Number *',
               controller: _building,
@@ -561,6 +666,48 @@ class _RetailerFormScreenState extends State<RetailerFormScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Single-value input dialog. Owns its [TextEditingController] so it is
+/// disposed together with the dialog route (prevents the "controller used
+/// after being disposed" crash when the dialog closes via submit).
+class _AddValueDialog extends StatefulWidget {
+  final String title;
+  const _AddValueDialog({required this.title});
+
+  @override
+  State<_AddValueDialog> createState() => _AddValueDialogState();
+}
+
+class _AddValueDialogState extends State<_AddValueDialog> {
+  final _ctrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _submit() => Navigator.of(context).pop(_ctrl.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.title),
+      content: TextField(
+        controller: _ctrl,
+        autofocus: true,
+        textCapitalization: TextCapitalization.words,
+        textInputAction: TextInputAction.done,
+        decoration: const InputDecoration(hintText: 'Type a value'),
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        TextButton(onPressed: _submit, child: const Text('Add')),
+      ],
     );
   }
 }

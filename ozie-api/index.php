@@ -24,6 +24,9 @@ $routes = [
     'POST v1/onboarding/check-duplicate' => 'v1/onboarding/check_duplicate.php',
     'POST v1/onboarding/submit'      => 'v1/onboarding/submit.php',
 
+    // --- dashboard
+    'GET  v1/dashboard/retailer'     => 'v1/dashboard/retailer.php',
+
     // --- profile
     'GET  v1/profile/get'            => 'v1/profile/get.php',
     'POST v1/profile/update'         => 'v1/profile/update.php',
