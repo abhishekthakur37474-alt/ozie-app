@@ -3,6 +3,7 @@ import 'package:hugeicons/hugeicons.dart';
 
 import '../core/models.dart';
 import '../widgets/app_widgets.dart';
+import 'bank_card_screen.dart';
 import 'notifications_screen.dart';
 import 'tabs/catalog_tab.dart';
 import 'tabs/home_tab.dart';
@@ -58,6 +59,12 @@ class _MainShellState extends State<MainShell> {
     );
   }
 
+  void _openBankCard() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const BankCardScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final pages = <Widget>[
@@ -81,6 +88,28 @@ class _MainShellState extends State<MainShell> {
           titleSpacing: 16,
           title: _buildTitle(),
           actions: [
+            // Opens the bank credit card details/application screen.
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: OutlinedButton(
+                onPressed: _openBankCard,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.blue,
+                  side: const BorderSide(color: AppColors.blue),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  minimumSize: const Size(0, 36),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Apply For Card',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
             IconButton(
               tooltip: 'Notifications',
               icon: const HugeIcon(

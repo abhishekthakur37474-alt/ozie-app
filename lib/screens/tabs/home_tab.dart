@@ -98,46 +98,39 @@ class _DashboardBody extends StatelessWidget {
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
       children: [
-        _TodayRow(today: d.today),
-        const SizedBox(height: 16),
-        _CountsRow(counts: d.counts, pendingTotal: d.pendingPaymentsTotal),
-        const SizedBox(height: 16),
-        _CreditCard(credit: d.credit),
-        const SizedBox(height: 16),
-        _BankCardCard(bankCard: d.bankCard),
-        if (d.banners.isNotEmpty) ...[
+        // Active schemes sit at the very top as a scrolling strip.
+        if (schemes.isNotEmpty) ...[
+          const _SectionTitle('Active Schemes'),
+          const SizedBox(height: 12),
+          _SchemeStrip(schemes: schemes),
           const SizedBox(height: 20),
+        ],
+        _TodayRow(today: d.today, counts: d.counts),
+        const SizedBox(height: 20),
+        _CreditCard(credit: d.credit),
+        if (d.banners.isNotEmpty) ...[
+          const SizedBox(height: 28),
           const _SectionTitle('Offers & Updates'),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           _BannerCarousel(banners: d.banners),
         ],
-        if (schemes.isNotEmpty) ...[
-          const SizedBox(height: 20),
-          const _SectionTitle('Active Schemes'),
-          const SizedBox(height: 10),
-          _SchemeList(schemes: schemes),
-        ],
         if (d.quickActions.isNotEmpty) ...[
-          const SizedBox(height: 20),
+          const SizedBox(height: 28),
           const _SectionTitle('Quick Actions'),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           _QuickActions(actions: d.quickActions),
         ],
-        if (d.latestOrders.isNotEmpty) ...[
-          const SizedBox(height: 20),
-          const _SectionTitle('Latest Orders'),
-          const SizedBox(height: 10),
-          _LatestOrders(orders: d.latestOrders),
-        ],
-        if (d.pendingPayments.isNotEmpty) ...[
-          const SizedBox(height: 20),
-          const _SectionTitle('Pending Payments'),
-          const SizedBox(height: 10),
-          _PendingPayments(payments: d.pendingPayments),
-        ],
-        const SizedBox(height: 8),
+        const SizedBox(height: 28),
+        const _SectionTitle('Latest Approved Orders'),
+        const SizedBox(height: 14),
+        _LatestOrders(orders: d.latestOrders),
+        const SizedBox(height: 28),
+        const _SectionTitle('Pending Payments'),
+        const SizedBox(height: 14),
+        _PendingPayments(payments: d.pendingPayments),
+        const SizedBox(height: 12),
       ],
     );
   }
@@ -158,12 +151,12 @@ class _CreditCard extends StatelessWidget {
           Row(
             children: [
               const Icon(Icons.account_balance_wallet_outlined,
-                  size: 18, color: AppColors.blue),
-              const SizedBox(width: 8),
+                  size: 20, color: AppColors.blue),
+              const SizedBox(width: 10),
               const Text(
                 'Credit',
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: AppColors.text,
                 ),
@@ -172,11 +165,11 @@ class _CreditCard extends StatelessWidget {
               if (credit.creditDays > 0)
                 Text(
                   '${credit.creditDays} days',
-                  style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                  style: const TextStyle(fontSize: 13, color: AppColors.muted),
                 ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
           Row(
             children: [
               Expanded(
@@ -186,7 +179,7 @@ class _CreditCard extends StatelessWidget {
                   color: AppColors.successText,
                 ),
               ),
-              Container(width: 1, height: 40, color: AppColors.border),
+              Container(width: 1, height: 48, color: AppColors.border),
               Expanded(
                 child: _AmountBlock(
                   label: 'Used',
@@ -194,7 +187,7 @@ class _CreditCard extends StatelessWidget {
                   color: AppColors.dangerText,
                 ),
               ),
-              Container(width: 1, height: 40, color: AppColors.border),
+              Container(width: 1, height: 48, color: AppColors.border),
               Expanded(
                 child: _AmountBlock(
                   label: 'Limit',
@@ -204,12 +197,12 @@ class _CreditCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
               value: credit.usedRatio,
-              minHeight: 8,
+              minHeight: 9,
               backgroundColor: AppColors.border,
               valueColor: const AlwaysStoppedAnimation(AppColors.blue),
             ),
@@ -232,10 +225,10 @@ class _AmountBlock extends StatelessWidget {
       children: [
         Text(
           formatInr(value, decimals: false),
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: color),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: color),
         ),
-        const SizedBox(height: 2),
-        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
       ],
     );
   }
@@ -245,39 +238,63 @@ class _AmountBlock extends StatelessWidget {
 
 class _TodayRow extends StatelessWidget {
   final DashboardToday today;
-  const _TodayRow({required this.today});
+  final DashboardCounts counts;
+  const _TodayRow({required this.today, required this.counts});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _StatTile(
-            icon: Icons.shopping_bag_outlined,
-            label: "Today's Orders",
-            value: '${today.ordersCount}',
-            tint: AppColors.blue,
+    // IntrinsicHeight + stretch keeps all three tiles the same height even
+    // when a label wraps to two lines.
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _StatTile(
+              icon: Icons.shopping_bag_outlined,
+              label: "Today's Orders",
+              value: '${today.ordersCount}',
+              tint: AppColors.blue,
+            ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _StatTile(
-            icon: Icons.trending_up,
-            label: 'Sales',
-            value: formatInr(today.salesValue, decimals: false),
-            tint: AppColors.green,
+          const SizedBox(width: 12),
+          Expanded(
+            child: _StatTile(
+              icon: Icons.pending_actions_outlined,
+              label: 'Pending Orders',
+              value: '${counts.pendingOrders}',
+              tint: AppColors.green,
+            ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _StatTile(
-            icon: Icons.payments_outlined,
-            label: 'Paid',
-            value: formatInr(today.paidValue, decimals: false),
-            tint: AppColors.successText,
+          const SizedBox(width: 12),
+          Expanded(
+            child: _StatTile(
+              icon: Icons.local_shipping_outlined,
+              label: 'Dispatches',
+              value: '${counts.dispatched}',
+              tint: AppColors.successText,
+            ),
           ),
-        ),
-      ],
+          // Sales, Paid and Pending Pay tiles are intentionally hidden.
+          // Expanded(
+          //   child: _StatTile(
+          //     icon: Icons.trending_up,
+          //     label: 'Sales',
+          //     value: formatInr(today.salesValue, decimals: false),
+          //     tint: AppColors.green,
+          //   ),
+          // ),
+          // const SizedBox(width: 12),
+          // Expanded(
+          //   child: _StatTile(
+          //     icon: Icons.payments_outlined,
+          //     label: 'Paid',
+          //     value: formatInr(today.paidValue, decimals: false),
+          //     tint: AppColors.successText,
+          //   ),
+          // ),
+        ],
+      ),
     );
   }
 }
@@ -297,213 +314,27 @@ class _StatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _SectionCard(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: tint),
-          const SizedBox(height: 8),
+          Icon(icon, size: 22, color: tint),
+          const SizedBox(height: 10),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 16,
+              fontSize: 18,
               fontWeight: FontWeight.w700,
               color: AppColors.text,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(fontSize: 11, color: AppColors.muted),
+            style: const TextStyle(fontSize: 12, color: AppColors.muted),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-/* ----------------------------- counts ----------------------------- */
-
-class _CountsRow extends StatelessWidget {
-  final DashboardCounts counts;
-  final double pendingTotal;
-  const _CountsRow({required this.counts, required this.pendingTotal});
-
-  @override
-  Widget build(BuildContext context) {
-    return _SectionCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.insights_outlined, size: 18, color: AppColors.blue),
-              const SizedBox(width: 8),
-              const Text(
-                'Overview',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.text,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _MiniCount(
-                  value: '${counts.pendingOrders}',
-                  label: 'Pending Orders',
-                ),
-              ),
-              Expanded(
-                child: _MiniCount(
-                  value: '${counts.dispatched}',
-                  label: 'Dispatched',
-                ),
-              ),
-              Expanded(
-                child: _MiniCount(
-                  value: '${counts.pendingPayments}',
-                  label: 'Pending Pay',
-                ),
-              ),
-            ],
-          ),
-          if (pendingTotal > 0) ...[
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.dangerBg,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                'Total pending payments: ${formatInr(pendingTotal)}',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.dangerText,
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _MiniCount extends StatelessWidget {
-  final String value;
-  final String label;
-  const _MiniCount({required this.value, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: AppColors.text,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 11, color: AppColors.muted),
-        ),
-      ],
-    );
-  }
-}
-
-/* ----------------------------- bank card ----------------------------- */
-
-class _BankCardCard extends StatelessWidget {
-  final DashboardBankCard bankCard;
-  const _BankCardCard({required this.bankCard});
-
-  @override
-  Widget build(BuildContext context) {
-    final status = bankCard.status;
-    final Color fg;
-    final Color bg;
-    if (bankCard.isActive) {
-      fg = AppColors.successText;
-      bg = AppColors.successBg;
-    } else if (bankCard.isPending) {
-      fg = const Color(0xFF92400E);
-      bg = const Color(0xFFFDE68A);
-    } else {
-      fg = AppColors.dangerText;
-      bg = AppColors.dangerBg;
-    }
-
-    return _SectionCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.credit_card, size: 18, color: AppColors.blue),
-              const SizedBox(width: 8),
-              const Text(
-                'Bank Credit Card',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.text,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                decoration: BoxDecoration(
-                  color: bg,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  status,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: fg,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (bankCard.message.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Text(
-              bankCard.message,
-              style: const TextStyle(fontSize: 13, color: AppColors.muted),
-            ),
-          ],
-          if ((bankCard.action ?? '').isNotEmpty) ...[
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: () => showStatus(context, '${bankCard.action} - coming soon'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.blue,
-                side: const BorderSide(color: AppColors.blue),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(bankCard.action!),
-            ),
-          ],
         ],
       ),
     );
@@ -550,7 +381,7 @@ class _BannerCarouselState extends State<_BannerCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    final height = 170.0;
+    final height = 180.0;
     return Column(
       children: [
         SizedBox(
@@ -639,7 +470,7 @@ class _BannerTile extends StatelessWidget {
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
                 ),
               ),
             ],
@@ -650,133 +481,180 @@ class _BannerTile extends StatelessWidget {
 
 /* ----------------------------- schemes ----------------------------- */
 
-class _SchemeList extends StatelessWidget {
+/// Active schemes shown one full tile at a time (sliding, not half-cut).
+class _SchemeStrip extends StatefulWidget {
   final List<DashboardScheme> schemes;
-  const _SchemeList({required this.schemes});
+  const _SchemeStrip({required this.schemes});
+
+  @override
+  State<_SchemeStrip> createState() => _SchemeStripState();
+}
+
+class _SchemeStripState extends State<_SchemeStrip> {
+  final PageController _controller = PageController();
+  Timer? _timer;
+  int _page = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.schemes.length > 1) {
+      _timer = Timer.periodic(const Duration(seconds: 3), (_) {
+        if (!mounted || !_controller.hasClients) return;
+        _page = (_page + 1) % widget.schemes.length;
+        _controller.animateToPage(
+          _page,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 205,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: schemes.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (context, i) => SizedBox(
-          width: 210,
-          child: _SchemeCard(scheme: schemes[i]),
+    return Column(
+      children: [
+        SizedBox(
+          height: 92,
+          child: PageView.builder(
+            controller: _controller,
+            itemCount: widget.schemes.length,
+            onPageChanged: (i) => setState(() => _page = i),
+            itemBuilder: (context, i) => _SchemeStripTile(
+              scheme: widget.schemes[i],
+            ),
+          ),
         ),
-      ),
+        if (widget.schemes.length > 1) ...[
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              widget.schemes.length,
+              (i) => AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: i == _page ? 18 : 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: i == _page ? AppColors.blue : AppColors.border,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
 
-class _SchemeCard extends StatelessWidget {
+/// Compact one-line tile used inside the active-schemes strip.
+class _SchemeStripTile extends StatelessWidget {
   final DashboardScheme scheme;
-  const _SchemeCard({required this.scheme});
+  const _SchemeStripTile({required this.scheme});
 
   @override
   Widget build(BuildContext context) {
-    return _SectionCard(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    final hasImage = (scheme.giftImageUrl ?? '').isNotEmpty;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.inputBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  scheme.isPaper ? 'Paper Scheme' : 'Standard Scheme',
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: hasImage
+                ? Image.network(
+                    scheme.giftImageUrl!,
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stack) => _thumb(),
+                  )
+                : _thumb(),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  scheme.title ?? scheme.schemeType ?? 'Scheme',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 11,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.blue,
+                    color: AppColors.text,
                   ),
                 ),
-              ),
-              if (!scheme.isAvailable)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppColors.dangerBg,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text(
-                    'Out of stock',
-                    style: TextStyle(fontSize: 9, color: AppColors.dangerText),
-                  ),
+                const SizedBox(height: 3),
+                Text(
+                  scheme.productName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12, color: AppColors.muted),
                 ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          if ((scheme.giftImageUrl ?? '').isNotEmpty)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                scheme.giftImageUrl!,
-                height: 60,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stack) => _giftFallback(),
-              ),
-            )
-          else
-            _giftFallback(),
-          const SizedBox(height: 8),
-          Text(
-            scheme.title ?? scheme.schemeType ?? 'Scheme',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.text,
+                if ((scheme.giftName ?? '').isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    'Gift: ${scheme.giftName}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.successText,
+                    ),
+                  ),
+                ] else if ((scheme.minText ?? '').isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    scheme.minText!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12, color: AppColors.text),
+                  ),
+                ],
+              ],
             ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            scheme.productName,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 11, color: AppColors.muted),
-          ),
-          const Spacer(),
-          if ((scheme.minText ?? '').isNotEmpty)
-            Text(
-              scheme.minText!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 11, color: AppColors.text),
-            ),
-          if ((scheme.giftName ?? '').isNotEmpty)
-            Text(
-              'Gift: ${scheme.giftName}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppColors.successText,
-              ),
-            ),
-          if ((scheme.endDate ?? '').isNotEmpty)
-            Text(
-              'Valid till ${formatDate(scheme.endDate)}',
-              style: const TextStyle(fontSize: 10, color: AppColors.muted),
+          if (!scheme.isAvailable)
+            const Padding(
+              padding: EdgeInsets.only(left: 8),
+              child: Icon(Icons.block, size: 16, color: AppColors.dangerText),
             ),
         ],
       ),
     );
   }
 
-  Widget _giftFallback() => Container(
-        height: 60,
-        width: double.infinity,
+  Widget _thumb() => Container(
+        width: 56,
+        height: 56,
         decoration: BoxDecoration(
           color: AppColors.successBg,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: const Icon(Icons.card_giftcard, color: AppColors.successText),
+        child: const Icon(
+          Icons.card_giftcard,
+          size: 24,
+          color: AppColors.successText,
+        ),
       );
 }
 
@@ -797,47 +675,52 @@ class _QuickActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _SectionCard(
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 16,
-        alignment: WrapAlignment.start,
-        children: actions.map((a) {
-          return SizedBox(
-            width: (MediaQuery.of(context).size.width - 32 - 32 - 16) / 3,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(8),
-              onTap: () => showStatus(context, '${a.label} - coming soon'),
+    // 3 items per row, no surrounding card/container.
+    final itemWidth = (MediaQuery.of(context).size.width - 40 - 24) / 3;
+    return Wrap(
+      spacing: 12,
+      runSpacing: 22,
+      children: actions.map((a) {
+        return SizedBox(
+          width: itemWidth,
+          // Fixed height so every tile stays the same size regardless of
+          // how many lines the label wraps to.
+          height: 100,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => showStatus(context, '${a.label} - coming soon'),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: AppColors.inputBg,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Icon(
-                      _icons[a.key] ?? Icons.grid_view_outlined,
-                      size: 20,
-                      color: AppColors.blue,
-                    ),
+                  Icon(
+                    _icons[a.key] ?? Icons.grid_view_outlined,
+                    size: 34,
+                    color: AppColors.blue,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    a.label,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 11, color: AppColors.text),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 36,
+                    child: Text(
+                      a.label,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.3,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.text,
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
-          );
-        }).toList(),
-      ),
+          ),
+        );
+      }).toList(),
     );
   }
 }
@@ -850,6 +733,12 @@ class _LatestOrders extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (orders.isEmpty) {
+      return const _EmptyState(
+        icon: Icons.receipt_long_outlined,
+        message: 'No approved orders yet',
+      );
+    }
     return _SectionCard(
       padding: EdgeInsets.zero,
       child: Column(
@@ -871,7 +760,7 @@ class _OrderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       child: Row(
         children: [
           Expanded(
@@ -883,15 +772,15 @@ class _OrderRow extends StatelessWidget {
                       ? order.displayNumber
                       : 'ORD-${order.orderId}',
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: AppColors.text,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
                   '${order.customer} · ${formatDate(order.createdAt)}',
-                  style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                  style: const TextStyle(fontSize: 12, color: AppColors.muted),
                 ),
               ],
             ),
@@ -902,12 +791,12 @@ class _OrderRow extends StatelessWidget {
               Text(
                 formatInr(order.total),
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: AppColors.text,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 3),
               _StatusBadge(
                 text: order.isPaid ? 'Paid' : (order.paymentStatus ?? 'Pending'),
                 positive: order.isPaid,
@@ -928,6 +817,12 @@ class _PendingPayments extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (payments.isEmpty) {
+      return const _EmptyState(
+        icon: Icons.payments_outlined,
+        message: 'No pending payments',
+      );
+    }
     return _SectionCard(
       padding: EdgeInsets.zero,
       child: Column(
@@ -950,7 +845,7 @@ class _PaymentRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final amount = payment.dueAmount ?? payment.total;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       child: Row(
         children: [
           Expanded(
@@ -960,17 +855,17 @@ class _PaymentRow extends StatelessWidget {
                 Text(
                   payment.invoiceNumber ?? 'Order #${payment.orderId}',
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: AppColors.text,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
                   (payment.dueDate ?? '').isNotEmpty
                       ? 'Due ${formatDate(payment.dueDate)}'
                       : (payment.paymentStatus ?? ''),
-                  style: const TextStyle(fontSize: 11, color: AppColors.muted),
+                  style: const TextStyle(fontSize: 12, color: AppColors.muted),
                 ),
               ],
             ),
@@ -981,12 +876,12 @@ class _PaymentRow extends StatelessWidget {
               Text(
                 formatInr(amount),
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: AppColors.text,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 3),
               _StatusBadge(text: payment.badge, positive: !payment.isOverdue),
             ],
           ),
@@ -998,12 +893,36 @@ class _PaymentRow extends StatelessWidget {
 
 /* ----------------------------- shared ----------------------------- */
 
+class _EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String message;
+  const _EmptyState({required this.icon, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      child: Center(
+        child: Column(
+          children: [
+            Icon(icon, size: 30, color: AppColors.muted),
+            const SizedBox(height: 10),
+            Text(
+              message,
+              style: const TextStyle(fontSize: 13, color: AppColors.muted),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _SectionCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
   const _SectionCard({
     required this.child,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.all(18),
   });
 
   @override
@@ -1012,8 +931,15 @@ class _SectionCard extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         color: AppColors.card,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A1E2A3B),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: child,
     );
@@ -1029,7 +955,7 @@ class _SectionTitle extends StatelessWidget {
     return Text(
       text,
       style: const TextStyle(
-        fontSize: 15,
+        fontSize: 17,
         fontWeight: FontWeight.w700,
         color: AppColors.text,
       ),
@@ -1045,7 +971,7 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
         color: positive ? AppColors.successBg : AppColors.dangerBg,
         borderRadius: BorderRadius.circular(20),
@@ -1053,7 +979,7 @@ class _StatusBadge extends StatelessWidget {
       child: Text(
         text,
         style: TextStyle(
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: FontWeight.w600,
           color: positive ? AppColors.successText : AppColors.dangerText,
         ),
