@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 import '../core/api_client.dart';
 import '../core/auth_service.dart';
@@ -174,7 +175,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
   Widget _backLink(_View to) => TextButton.icon(
         onPressed: _busy ? null : () => setState(() => _view = to),
-        icon: const Icon(Icons.arrow_back, size: 16),
+        icon: const HugeIcon(
+          icon: HugeIcons.strokeRoundedChevronLeft,
+          size: 16,
+          strokeWidth: 1.5,
+        ),
         label: const Text('Back', style: TextStyle(fontSize: 13)),
       );
 

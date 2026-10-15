@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 import '../widgets/app_widgets.dart';
 
@@ -13,6 +14,15 @@ class NotificationsScreen extends StatelessWidget {
         title: const Text('Notifications'),
         backgroundColor: AppColors.card,
         surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          tooltip: 'Back',
+          icon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedChevronLeft,
+            color: AppColors.text,
+            strokeWidth: 1.5,
+          ),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
       ),
       body: const Center(
         child: Padding(

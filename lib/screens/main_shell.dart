@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 import '../core/models.dart';
 import '../widgets/app_widgets.dart';
@@ -33,8 +34,8 @@ class _MainShellState extends State<MainShell> {
           Text(
             'Ozie',
             style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
               color: AppColors.text,
             ),
           ),
@@ -44,8 +45,8 @@ class _MainShellState extends State<MainShell> {
     return Text(
       _titles[_index],
       style: const TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
+        fontSize: 24,
+        fontWeight: FontWeight.w700,
         color: AppColors.text,
       ),
     );
@@ -73,7 +74,7 @@ class _MainShellState extends State<MainShell> {
       },
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: AppColors.card,
+          backgroundColor: AppColors.bg,
           surfaceTintColor: Colors.transparent,
           scrolledUnderElevation: 0,
           elevation: 0,
@@ -82,48 +83,78 @@ class _MainShellState extends State<MainShell> {
           actions: [
             IconButton(
               tooltip: 'Notifications',
-              icon: const Icon(
-                Icons.notifications_none_rounded,
+              icon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedNotification01,
                 color: AppColors.text,
               ),
               onPressed: _openNotifications,
             ),
             const SizedBox(width: 4),
           ],
-          bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(1),
-            child: Divider(height: 1, color: AppColors.border),
-          ),
         ),
         body: IndexedStack(index: _index, children: pages),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _index,
-          onDestinationSelected: (i) => setState(() => _index = i),
-          backgroundColor: AppColors.card,
-          surfaceTintColor: Colors.transparent,
-          indicatorColor: const Color(0xFFDCE9FA),
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home_rounded, color: AppColors.blue),
-              label: 'Home',
+        bottomNavigationBar: Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.border),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x14000000),
+                blurRadius: 20,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: NavigationBar(
+              selectedIndex: _index,
+              onDestinationSelected: (i) => setState(() => _index = i),
+              backgroundColor: AppColors.card,
+              surfaceTintColor: Colors.transparent,
+              indicatorColor: Colors.transparent,
+              elevation: 0,
+              height: 64,
+              labelBehavior:
+                  NavigationDestinationLabelBehavior.alwaysShow,
+              destinations: const [
+                NavigationDestination(
+                  icon: HugeIcon(icon: HugeIcons.strokeRoundedHome03),
+                  selectedIcon: HugeIcon(
+                    icon: HugeIcons.strokeRoundedHome03,
+                    color: AppColors.blue,
+                  ),
+                  label: 'Home',
+                ),
+                NavigationDestination(
+                  icon: HugeIcon(icon: HugeIcons.strokeRoundedStore03),
+                  selectedIcon: HugeIcon(
+                    icon: HugeIcons.strokeRoundedStore03,
+                    color: AppColors.blue,
+                  ),
+                  label: 'Catalog',
+                ),
+                NavigationDestination(
+                  icon: HugeIcon(icon: HugeIcons.strokeRoundedShoppingBag01),
+                  selectedIcon: HugeIcon(
+                    icon: HugeIcons.strokeRoundedShoppingBag01,
+                    color: AppColors.blue,
+                  ),
+                  label: 'View Orders',
+                ),
+                NavigationDestination(
+                  icon: HugeIcon(icon: HugeIcons.strokeRoundedSettings02),
+                  selectedIcon: HugeIcon(
+                    icon: HugeIcons.strokeRoundedSettings02,
+                    color: AppColors.blue,
+                  ),
+                  label: 'Settings',
+                ),
+              ],
             ),
-            NavigationDestination(
-              icon: Icon(Icons.grid_view_outlined),
-              selectedIcon: Icon(Icons.grid_view_rounded, color: AppColors.blue),
-              label: 'Catalog',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.receipt_long_outlined),
-              selectedIcon: Icon(Icons.receipt_long, color: AppColors.blue),
-              label: 'View Orders',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.settings_outlined),
-              selectedIcon: Icon(Icons.settings, color: AppColors.blue),
-              label: 'Settings',
-            ),
-          ],
+          ),
         ),
       ),
     );
